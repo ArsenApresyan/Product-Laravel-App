@@ -10,18 +10,22 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Services\PriceChangeService;
 use App\Repositories\ProductRepositoryInterface;
+use App\Services\ImageService;
 
 class AdminController extends Controller
 {
     protected $productRepository;
     protected $priceChangeService;
+    protected $imageService;
 
     public function __construct(
         ProductRepositoryInterface $productRepository,
-        PriceChangeService $priceChangeService
+        PriceChangeService $priceChangeService,
+        ImageService $imageService
     ) {
         $this->productRepository = $productRepository;
         $this->priceChangeService = $priceChangeService;
+        $this->imageService = $imageService;
     }
 
     public function loginPage()
@@ -66,10 +70,7 @@ class AdminController extends Controller
         $this->productRepository->update($product, $request->validated());
 
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads'), $filename);
-            $product->image = 'uploads/' . $filename;
+            $product->image = $this->imageService->uploadImage($request->file('image'));
             $product->save();
         }
 
@@ -100,10 +101,7 @@ class AdminController extends Controller
         $product = $this->productRepository->create($request->validated());
 
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads'), $filename);
-            $product->image = 'uploads/' . $filename;
+            $product->image = $this->imageService->uploadImage($request->file('image'));
         } else {
             $product->image = 'product-placeholder.jpg';
         }
