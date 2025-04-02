@@ -37,6 +37,17 @@
             margin-bottom: 20px;
             border-radius: 4px;
         }
+        .logout-form {
+            display: inline;
+        }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: blue;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 1em;
+        }
     </style>
 </head>
 <body>
@@ -45,7 +56,10 @@
             <h1>Admin - Products</h1>
             <div>
                 <a href="{{ route('admin.add.product') }}" class="btn btn-primary">Add New Product</a>
-                <a href="{{ route('logout') }}" class="btn btn-secondary">Logout</a>
+                <form action="{{ route('logout') }}" method="POST" class="logout-form">
+                    @csrf
+                    <button type="submit" class="btn btn-secondary">Logout</button>
+                </form>
             </div>
         </div>
 
