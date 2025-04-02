@@ -40,7 +40,7 @@ class AdminController extends Controller
 
     public function editProduct($id)
     {
-        $product = Product::find($id);
+        $product = Product::findOrFail($id);
         return view('admin.edit_product', compact('product'));
     }
 
@@ -84,10 +84,14 @@ class AdminController extends Controller
 
     public function deleteProduct($id)
     {
-        $product = Product::find($id);
-        $product->delete();
-
-        return redirect()->route('admin.products')->with('success', 'Product deleted successfully');
+        try {
+            $product = Product::findOrFail($id);
+            $product->delete();
+            return redirect()->route('admin.products')->with('success', 'Product deleted successfully');
+        } catch (\Exception $e) {
+            Log::error('Failed to delete product: ' . $e->getMessage());
+            return redirect()->route('admin.products')->with('error', 'Failed to delete product');
+        }
     }
 
     public function addProductForm()
