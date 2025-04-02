@@ -14,7 +14,7 @@ use App\Models\Product;
 
 class SendPriceChangeNotification implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $product;
     protected $oldPrice;
@@ -41,12 +41,21 @@ class SendPriceChangeNotification implements ShouldQueue
      */
     public function handle()
     {
+        try {
+            Log::info('Processing price change notification', [
+                'product' => $this->product->name,
+                'old_price' => $this->oldPrice,
+                'new_price' => $this->newPrice
+            ]);
+
             Mail::to($this->email)
                 ->send(new PriceChangeNotification(
                     $this->product,
                     $this->oldPrice,
                     $this->newPrice
                 ));
-
+        } catch (\Exception $e) {
+            Log::error('Failed to send price change notification: ' . $e->getMessage());
+        }
     }
 }

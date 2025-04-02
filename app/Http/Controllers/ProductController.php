@@ -3,13 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Product;
+use App\Repositories\ProductRepositoryInterface;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
+    protected $productRepository;
+
+    public function __construct(ProductRepositoryInterface $productRepository)
+    {
+        $this->productRepository = $productRepository;
+    }
+
     public function index()
     {
-        $products = Product::paginate(10);
+        $products = $this->productRepository->paginate(12);
         $exchangeRate = $this->getExchangeRate();
 
         return view('products.list', compact('products', 'exchangeRate'));
@@ -18,7 +26,7 @@ class ProductController extends Controller
     public function show(Request $request)
     {
         $id = $request->route('product_id');
-        $product = Product::findOrFail($id);
+        $product = $this->productRepository->findOrFail($id);
         $exchangeRate = $this->getExchangeRate();
 
         return view('products.show', compact('product', 'exchangeRate'));
