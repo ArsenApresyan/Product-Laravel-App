@@ -6,8 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Product;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use App\Jobs\SendPriceChangeNotification;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 
 class AdminController extends Controller
 {
@@ -43,30 +44,18 @@ class AdminController extends Controller
         return view('admin.edit_product', compact('product'));
     }
 
-    public function updateProduct(Request $request, $id)
+    public function updateProduct(UpdateProductRequest $request, $id)
     {
-        // Validate the name field
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|min:3',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()
-                ->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $product = Product::find($id);
+        $product = Product::findOrFail($id);
 
         // Store the old price before updating
         $oldPrice = $product->price;
 
-        $product->update($request->all());
+        $product->update($request->validated());
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            $filename = $file->getClientOriginalExtension();
+            $filename = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads'), $filename);
             $product->image = 'uploads/' . $filename;
         }
@@ -106,28 +95,14 @@ class AdminController extends Controller
         return view('admin.add_product');
     }
 
-    public function addProduct(Request $request)
+    public function addProduct(StoreProductRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|min:3',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()
-                ->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $product = Product::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price
-        ]);
+        $product = Product::create($request->validated());
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            $filename = $file->getClientOriginalExtension();
+            // Generate a unique filename with timestamp
+            $filename = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads'), $filename);
             $product->image = 'uploads/' . $filename;
         } else {
