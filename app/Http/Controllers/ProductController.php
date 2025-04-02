@@ -18,15 +18,12 @@ class ProductController extends Controller
     public function show(Request $request)
     {
         $id = $request->route('product_id');
-        $product = Product::find($id);
+        $product = Product::findOrFail($id);
         $exchangeRate = $this->getExchangeRate();
 
         return view('products.show', compact('product', 'exchangeRate'));
     }
 
-    /**
-     * @return float
-     */
     private function getExchangeRate()
     {
         try {
@@ -52,9 +49,9 @@ class ProductController extends Controller
                 }
             }
         } catch (\Exception $e) {
-
+            Log::error('Exchange rate API error: ' . $e->getMessage());
         }
 
-        return env('EXCHANGE_RATE', 0.85);
+        return config('app.default_exchange_rate', 0.85); // Use config instead of env
     }
 }
