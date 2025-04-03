@@ -29,7 +29,7 @@ class LoginController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             // Change this line to redirect to the admin.products route instead of admin
-            return redirect()->intended(route('admin.products'));
+            return redirect()->intended(route('admin.products.index'));
         }
 
         return back()->withErrors([

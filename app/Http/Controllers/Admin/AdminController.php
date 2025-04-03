@@ -29,21 +29,54 @@ class AdminController extends Controller
         $this->imageService = $imageService;
     }
 
-    // Login methods removed as they're now in LoginController
-
-    public function products()
+    /**
+     * Display a listing of the products.
+     */
+    public function index()
     {
         $products = $this->productRepository->paginate(15);
         return view('admin.products', compact('products'));
     }
 
-    public function editProduct($id)
+    /**
+     * Show the form for creating a new product.
+     */
+    public function create()
+    {
+        return view('admin.add_product');
+    }
+
+    /**
+     * Store a newly created product in storage.
+     */
+    public function store(StoreProductRequest $request)
+    {
+        $product = $this->productRepository->create($request->validated());
+
+        if ($request->hasFile('image')) {
+            $product->image = $this->imageService->uploadImage($request->file('image'));
+        } else {
+            $product->image = 'product-placeholder.jpg';
+        }
+
+        $product->save();
+
+        return redirect()->route('admin.products.index')->with('success', 'Product added successfully');
+    }
+
+    /**
+     * Show the form for editing the specified product.
+     */
+    public function edit($id)
     {
         $product = $this->productRepository->findOrFail($id);
         return view('admin.edit_product', compact('product'));
     }
 
-    public function updateProduct(UpdateProductRequest $request, $id)
+    /**
+     * Update the specified product in storage.
+     */
+    public function update(UpdateProductRequest $request, $id)
     {
         $product = $this->productRepository->findOrFail($id);
 
@@ -60,37 +93,20 @@ class AdminController extends Controller
         // Check if price has changed and notify
         $this->priceChangeService->notifyPriceChange($product, $oldPrice, $product->price);
 
-        return redirect()->route('admin.products')->with('success', 'Product updated successfully');
+        return redirect()->route('admin.products.index')->with('success', 'Product updated successfully');
     }
 
-    public function deleteProduct($id)
+    /**
+     * Remove the specified product from storage.
+     */
+    public function destroy($id)
     {
         try {
             $this->productRepository->delete($id);
-            return redirect()->route('admin.products')->with('success', 'Product deleted successfully');
+            return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully');
         } catch (\Exception $e) {
             Log::error('Failed to delete product: ' . $e->getMessage());
-            return redirect()->route('admin.products')->with('error', 'Failed to delete product');
+            return redirect()->route('admin.products.index')->with('error', 'Failed to delete product');
         }
-    }
-
-    public function addProductForm()
-    {
-        return view('admin.add_product');
-    }
-
-    public function addProduct(StoreProductRequest $request)
-    {
-        $product = $this->productRepository->create($request->validated());
-
-        if ($request->hasFile('image')) {
-            $product->image = $this->imageService->uploadImage($request->file('image'));
-        } else {
-            $product->image = 'product-placeholder.jpg';
-        }
-
-        $product->save();
-
-        return redirect()->route('admin.products')->with('success', 'Product added successfully');
     }
 }
